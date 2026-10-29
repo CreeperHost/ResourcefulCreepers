@@ -1,5 +1,14 @@
 {
   "itemGroup.resourcefulcreepers.creative_tab": "Resourceful Creepers",
 
-  "item.resourcefulcreepers.spawn_egg": "%s Spawn Egg"
+  "item.resourcefulcreepers.spawn_egg": "%s Spawn Egg",
+  "entity.resourcefulcreepers.copper_ore": "Copper Creeper",
+  "entity.resourcefulcreepers.iron_ore": "Iron Creeper",
+  "entity.resourcefulcreepers.gold_ore": "Gold Creeper",
+  "entity.resourcefulcreepers.coal_ore": "Coal Creeper",
+  "entity.resourcefulcreepers.redstone_ore": "Redstone Creeper",
+  "entity.resourcefulcreepers.lapis_ore": "Lapis Creeper",
+  "entity.resourcefulcreepers.quartz_ore_creeper": "Quartz Creeper",
+  "entity.resourcefulcreepers.diamond_ore": "Diamond Creeper",
+  "entity.resourcefulcreepers.emerald_ore": "Emerald Creeper"
 }

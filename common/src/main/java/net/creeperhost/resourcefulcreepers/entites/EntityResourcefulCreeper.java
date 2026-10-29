@@ -100,21 +100,13 @@ public class EntityResourcefulCreeper extends Animal
     }
 
     @Override
-    public Component getName()
+    protected Component getTypeName()
     {
-        if(level().isClientSide() && creeperType != null)
+        if (creeperType != null)
         {
-            if(hasCustomName())
-            {
-                return getCustomName();
-            }
-            return Component.translatable(creeperType.getDisplayName());
+            return Component.literal(creeperType.getDisplayName());
         }
-        if(super.getName() == null)
-        {
-            return Component.literal("null");
-        }
-        return super.getName();
+        return super.getTypeName();
     }
 
     public CreeperType getCreeperType()
