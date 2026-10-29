@@ -1,6 +1,8 @@
 build/
 *.ipr
 run/
+runs/
+.run/ModLens Client.run.xml
 *.iws
 out/
 *.iml

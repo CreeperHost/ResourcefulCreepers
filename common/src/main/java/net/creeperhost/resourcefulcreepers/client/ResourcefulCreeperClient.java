@@ -1,14 +1,14 @@
 package net.creeperhost.resourcefulcreepers.client;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 
 public class ResourcefulCreeperClient
 {
-    public static HashMap<String, ResourceLocation> TEXTURE_MAP = new HashMap<>();
+    public static HashMap<String, Identifier> TEXTURE_MAP = new HashMap<>();
 
-    public static void addTexture(String resourceName, ResourceLocation resourceLocation)
+    public static void addTexture(String resourceName, Identifier resourceLocation)
     {
         if(!TEXTURE_MAP.containsKey(resourceName))
         {
@@ -16,7 +16,7 @@ public class ResourcefulCreeperClient
         }
     }
 
-    public static ResourceLocation getTexture(String resourceName)
+    public static Identifier getTexture(String resourceName)
     {
         if(TEXTURE_MAP.containsKey(resourceName))
         {

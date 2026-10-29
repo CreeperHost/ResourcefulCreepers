@@ -1,6 +1,6 @@
 package net.creeperhost.resourcefulcreepers;
 
-import dev.architectury.platform.Platform;
+import net.creeperhost.polylib.platform.Services;
 
 import java.nio.file.Path;
 
@@ -12,7 +12,7 @@ public class Constants
     public static final String GIT_HASH  = "";
 
     //Paths
-    public static Path CONFIG_FOLDER = Platform.getConfigFolder().resolve(MOD_ID);
+    public static Path CONFIG_FOLDER = Services.PLATFORM.getConfigFolder().resolve(MOD_ID);
     public static Path CONFIG_FILE = CONFIG_FOLDER.resolve(MOD_ID + ".json");
     public static Path CREEPER_TYPES_CONFIG = CONFIG_FOLDER.resolve(MOD_ID + "_types.json");
     public static Path TEXTURE_PATH = CONFIG_FOLDER.resolve("textures");

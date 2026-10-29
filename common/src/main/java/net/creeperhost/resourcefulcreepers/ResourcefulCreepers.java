@@ -4,12 +4,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import dev.architectury.event.events.client.ClientLifecycleEvent;
-import dev.architectury.platform.Platform;
-import dev.architectury.registry.level.biome.BiomeModifications;
-import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
-import dev.architectury.utils.Env;
 import io.sentry.Sentry;
+import net.creeperhost.polylib.platform.Services;
+import net.creeperhost.polylib.event.events.client.PolyClientLevelEvents;
 import net.creeperhost.polylib.config.ConfigBuilder;
 import net.creeperhost.resourcefulcreepers.config.ConfigDataRC;
 import net.creeperhost.resourcefulcreepers.data.CreeperType;
@@ -17,22 +14,22 @@ import net.creeperhost.resourcefulcreepers.data.CreeperTypeList;
 import net.creeperhost.resourcefulcreepers.data.ItemDrop;
 import net.creeperhost.resourcefulcreepers.init.ModEntities;
 import net.creeperhost.resourcefulcreepers.util.TextureBuilder;
-import net.fabricmc.api.EnvType;
+
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.level.BlockAndTintGetter;
+
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MobSpawnSettings;
@@ -75,15 +72,15 @@ public class ResourcefulCreepers
             {
                 options.setDsn("https://9bf679b2950ef2c84b8b21794211ad46@sentry.crprh.st/7");
 
-                options.setTracesSampleRate(Platform.isDevelopmentEnvironment() ? 1.0 : 0.025);
-                options.setEnvironment(SharedConstants.getCurrentVersion().getName());
+                options.setTracesSampleRate(Services.PLATFORM.isDevelopmentEnvironment() ? 1.0 : 0.025);
+                options.setEnvironment(SharedConstants.getCurrentVersion().name());
                 options.setRelease(Constants.MOD_VERSION);
                 options.setTag("commit", BuildInfo.version);
-                options.setTag("modloader", Platform.isForgeLike() ? "Forge" : "Fabric");
+                options.setTag("modloader", Services.PLATFORM.getPlatformName());
                 options.setTag("ram", String.valueOf(((Runtime.getRuntime().maxMemory() / 1024) / 1024)));
                 options.setDist(System.getProperty("os.arch"));
-                options.setServerName(Platform.getEnv() == EnvType.CLIENT ? "integrated" : "dedicated");
-                options.setDebug(Platform.isDevelopmentEnvironment());
+                options.setServerName(Services.PLATFORM.isClient() ? "integrated" : "dedicated");
+                options.setDebug(Services.PLATFORM.isDevelopmentEnvironment());
                 options.addInAppInclude("net.creeperhost.resourcefulcreepers");
             });
         }
@@ -127,11 +124,11 @@ public class ResourcefulCreepers
                 }
             }
             generateDefaultTypes();
-            ModEntities.ENTITIES.register();
-            ModEntities.ITEMS.register();
-            if (Platform.getEnvironment() == Env.CLIENT)
+            ModEntities.ENTITIES.init();
+            ModEntities.ITEMS.init();
+            if (Services.PLATFORM.isClient())
             {
-                ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register(world ->
+                PolyClientLevelEvents.CLIENT_LEVEL_LOAD.register(world ->
                 {
                     //TODO Figure out creeper generation based on ores
 //                    if (configData.autoGenerateCreeperTypesFromOreTags)
@@ -149,7 +146,7 @@ public class ResourcefulCreepers
                             try
                             {
                                 LOGGER.info("Running texture builder for {}", creeperType.getName());
-                                CompletableFuture.runAsync(() -> TextureBuilder.createCreeperTexture(creeperType), TEXTURE_CREATION_EXECUTOR);
+                                net.minecraft.client.Minecraft.getInstance().execute(() -> TextureBuilder.createCreeperTexture(creeperType));
                             } catch (Exception e)
                             {
                                 Sentry.captureException(e);

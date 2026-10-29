@@ -1,61 +1,21 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "8.1.1"
-    id "maven-publish"
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
 }
-
-loom {
-    accessWidenerPath = file("src/main/resources/resourcefulcreepers.accesswidener")
-}
-
+neoForge { neoFormVersion = '26.3-1' }
 dependencies {
-    // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
-    // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury:${rootProject.architectury_version}"
-    modApi("net.creeperhost:polylib-fabric:${rootProject.polylib_version}")
-
-//    implementation "blue.endless:jankson:1.2.1"
+    compileOnly 'net.fabricmc:fabric-loader:0.19.5'
+    compileOnly 'org.spongepowered:mixin:0.8.7'
+    compileOnly 'maven.modrinth:polylib:uazcDB6Q'
     implementation 'io.sentry:sentry:5.7.2'
 }
-
-def targetPackage = 'net/creeperhost/resourcefulcreepers'
-def targetPackageJava = 'net.creeperhost.resourcefulcreepers'
-
-compileJava {
-    doFirst {
-        ant.mkdir(dir: "${projectDir}/src/main/java/${targetPackage}")
-        def newBuildInfo = new File("${projectDir}/src/main/java/${targetPackage}/BuildInfo.java")
-        def templateBuildInfo = new File("${projectDir}/templates/TemplateBuildInfo.java")
-        def buildTimeStamp = new Date().toString()
-
-        newBuildInfo.withWriter { def writer ->
-            templateBuildInfo.eachLine { def line ->
-                def newLine = line.replace("__PACKAGE", targetPackageJava)
-                        .replace("__VERSION", versionDetails().gitHash)
-                        .replace("__BUILD_TIMESTAMP", buildTimeStamp)
-                writer.write(newLine + "\n");
-            }
-        }
-    }
+configurations {
+    commonJava { canBeResolved = false; canBeConsumed = true }
+    commonResources { canBeResolved = false; canBeConsumed = true }
 }
-
-architectury {
-    common("fabric", "neoforge")
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }
-
-
-
-publishing {
-    publications {
-        mavenCommon(MavenPublication) {
-            artifactId = rootProject.archives_base_name
-            from components.java
-        }
-    }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-    }
-}
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { configurations.named(it) { attributes { attribute(loaderAttribute, 'common') } } }

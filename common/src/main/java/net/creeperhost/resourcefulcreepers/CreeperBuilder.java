@@ -5,9 +5,9 @@ import net.creeperhost.resourcefulcreepers.data.CreeperTypeList;
 import net.creeperhost.resourcefulcreepers.data.OreGenData;
 import net.creeperhost.resourcefulcreepers.util.ColorHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Tier;
+
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -16,7 +16,7 @@ import java.util.List;
 
 public class CreeperBuilder
 {
-    public static HashMap<ResourceLocation, OreGenData> ORE_DATA = new HashMap<>();
+    public static HashMap<Identifier, OreGenData> ORE_DATA = new HashMap<>();
     public static int MAX_TIER = 0;
 
 //    public static int generateFromOreTags()
@@ -30,8 +30,8 @@ public class CreeperBuilder
 //        int amount = 0;
 //        for (Block aDefault : defaults)
 //        {
-//            ResourceLocation name = BuiltInRegistries.BLOCK.getKey(aDefault);
-//            ResourceLocation empty = ResourceLocation.withDefaultNamespace("empty");
+//            Identifier name = BuiltInRegistries.BLOCK.getKey(aDefault);
+//            Identifier empty = Identifier.withDefaultNamespace("empty");
 //            if(name == empty)
 //            {
 //                ResourcefulCreepers.LOGGER.error("Unable to find blocks resource location for " + name + " Skipping");
@@ -68,8 +68,9 @@ public class CreeperBuilder
 
     public static void generateOreData()
     {
-        BuiltInRegistries.FEATURE.forEach(configuredFeature ->
-        {
+        // Ore generation is not yet implemented for dynamic registries.
+        // BuiltInRegistries.FEATURE.forEach(configuredFeature ->
+        // {
 //            configuredFeature.getFeatures().forEach(configuredFeature1 ->
 //            {
 //                if(configuredFeature1.config() instanceof OreConfiguration oreConfiguration)
@@ -114,12 +115,12 @@ public class CreeperBuilder
 //                    });
 //                    oreConfiguration.targetStates.forEach(targetBlockState ->
 //                    {
-//                        ResourceLocation name = Registry.BLOCK.getKey(targetBlockState.state.getBlock());
+//                        Identifier name = Registry.BLOCK.getKey(targetBlockState.state.getBlock());
 //                        ORE_DATA.put(name, new OreGenData(oreConfiguration.size, minWeight.get(), minY.get(), maxY.get()));
 //                    });
 //                }
 //            });
-        });
+        // });
     }
 
 //    public static int calculateTier(BlockState blockState)

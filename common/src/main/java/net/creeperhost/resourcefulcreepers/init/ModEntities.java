@@ -1,84 +1,55 @@
 package net.creeperhost.resourcefulcreepers.init;
 
-import dev.architectury.platform.Platform;
-import dev.architectury.registry.CreativeTabRegistry;
-import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
-import dev.architectury.registry.level.entity.EntityAttributeRegistry;
-import dev.architectury.registry.registries.DeferredRegister;
+import net.creeperhost.polylib.registry.PolyRegistry;
 import net.creeperhost.resourcefulcreepers.Constants;
-import net.creeperhost.resourcefulcreepers.ResourcefulCreepers;
-import net.creeperhost.resourcefulcreepers.ResourcefulCreepersPlatform;
-import net.creeperhost.resourcefulcreepers.client.ResourcefulCreeperRender;
 import net.creeperhost.resourcefulcreepers.data.CreeperType;
 import net.creeperhost.resourcefulcreepers.data.CreeperTypeList;
 import net.creeperhost.resourcefulcreepers.entites.EntityResourcefulCreeper;
-import net.creeperhost.resourcefulcreepers.items.CreeperSpawnEgg;
-import net.fabricmc.api.EnvType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BiomeTags;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomModelData;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ServerLevelAccessor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class ModEntities {
-    public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Constants.MOD_ID, Registries.ENTITY_TYPE);
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Constants.MOD_ID, Registries.ITEM);
-
-    public static final Map<CreeperType, Supplier<EntityType<EntityResourcefulCreeper>>> CREEPERS = new HashMap<>();
-    public static final HashMap<CreeperType, Supplier<CreeperSpawnEgg>> EGGS = new HashMap<>();
-
+    public static final PolyRegistry<EntityType<?>> ENTITIES = PolyRegistry.create(Registries.ENTITY_TYPE, Constants.MOD_ID);
+    public static final PolyRegistry<Item> ITEMS = PolyRegistry.create(Registries.ITEM, Constants.MOD_ID);
+    public static final Map<CreeperType, Supplier<EntityType<EntityResourcefulCreeper>>> CREEPERS = new LinkedHashMap<>();
+    public static final Map<CreeperType, Supplier<Item>> EGGS = new LinkedHashMap<>();
     static {
-        for (CreeperType creeperType : CreeperTypeList.INSTANCE.creeperTypes) {
-            ResourcefulCreepers.LOGGER.info("registering entity for {}", creeperType.getDisplayName());
-            CREEPERS.put(creeperType, ENTITIES.register(creeperType.getName(), () -> {
-                        EntityType<EntityResourcefulCreeper> type = EntityType.Builder.of(EntityResourcefulCreeper::new, MobCategory.MONSTER)
-                                .sized(0.6F, 1.7F)
-                                .clientTrackingRange(8)
-                                .build(creeperType.getName());
-                        EntityAttributeRegistry.register(() -> type, () -> EntityResourcefulCreeper.prepareAttributes(creeperType));
-                        if (Platform.getEnv() == EnvType.CLIENT) {
-                            EntityRendererRegistry.register(() -> type, ResourcefulCreeperRender::new);
-                        }
-                        return type;
-                    })
-            );
-
-            ResourcefulCreepers.LOGGER.info("registering entity spawn egg for {}", creeperType.getDisplayName());
-
-            EGGS.put(creeperType, ITEMS.register(creeperType.getName(), () -> new CreeperSpawnEgg(CREEPERS.get(creeperType), creeperType.getSpawnEggColour1(), creeperType.getSpawnEggColour2(), new Item.Properties()) {
-                @Override
-                public Component getName(@NotNull ItemStack itemStack) {
-                    return Component.translatable("item.resourcefulcreepers.spawn_egg", creeperType.getDisplayName());
+        for (CreeperType type : CreeperTypeList.INSTANCE.creeperTypes) {
+            CREEPERS.put(type, ENTITIES.registerWithKey(type.getName(), key -> EntityType.Builder
+                .of(EntityResourcefulCreeper::new, MobCategory.MONSTER).sized(0.6F, 1.7F)
+                .clientTrackingRange(8).build(key)));
+            EGGS.put(type, ITEMS.registerItem(type.getName(), props -> new SpawnEggItem(props.spawnEgg(CREEPERS.get(type).get())
+                    .component(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(),
+                            List.of(type.getSpawnEggColour1() & 0xffffff, type.getSpawnEggColour2() & 0xffffff)))) {
+                @Override public Component getName(ItemStack stack) {
+                    return Component.translatable("item.resourcefulcreepers.spawn_egg", type.getDisplayName());
                 }
             }));
         }
     }
-
-    public static boolean checkMonsterSpawnRules(EntityType<?> entityType, ServerLevelAccessor levelAccessor, MobSpawnType mobSpawnType, BlockPos blockPos, RandomSource randomSource, CreeperType creeperType) {
-        if (levelAccessor.getDifficulty() == Difficulty.PEACEFUL) return false;
-        BlockPos belowPos = blockPos.below();
-        if (!levelAccessor.getBlockState(belowPos).isValidSpawn(levelAccessor, belowPos, entityType)) return false;
-        if (!levelAccessor.getBiome(blockPos).is(BiomeTags.IS_OVERWORLD)) return true;
-        return Monster.isDarkEnoughToSpawn(levelAccessor, blockPos, randomSource);
-    }
-
-    static {
-        CreativeTabRegistry.appendStack(CreativeModeTabs.SPAWN_EGGS, EGGS.values().stream().map(itemSupplier -> () -> new ItemStack(itemSupplier.get())));
+    public static boolean checkMonsterSpawnRules(EntityType<?> type, ServerLevelAccessor level, EntitySpawnReason reason, BlockPos pos, RandomSource random, CreeperType creeperType) {
+        if (level.getDifficulty() == Difficulty.PEACEFUL) return false;
+        BlockPos below = pos.below();
+        if (!level.getBlockState(below).isValidSpawn(level, below, type)) return false;
+        return !level.getBiome(pos).is(BiomeTags.IS_OVERWORLD) || Monster.isDarkEnoughToSpawn(level, pos, random);
     }
 }

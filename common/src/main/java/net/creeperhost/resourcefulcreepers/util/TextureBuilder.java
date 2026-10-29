@@ -8,7 +8,7 @@ import net.creeperhost.resourcefulcreepers.client.ResourcefulCreeperRender;
 import net.creeperhost.resourcefulcreepers.data.CreeperType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemStack;
 
@@ -17,11 +17,11 @@ import java.nio.file.Path;
 
 public class TextureBuilder
 {
-    public static ResourceLocation createCreeperTexture(CreeperType creeperType)
+    public static Identifier createCreeperTexture(CreeperType creeperType)
     {
         String resourceName = creeperType.getName();
         Path texture = Constants.TEXTURE_PATH.resolve(creeperType.getName() + ".png");
-        ResourceLocation newLocation = ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "/textures/entities/" + creeperType.getName());
+        Identifier newLocation = Identifier.fromNamespaceAndPath(Constants.MOD_ID, "textures/entities/" + creeperType.getName());
         if (!texture.toFile().exists() && !creeperType.getItemDropsAsList().isEmpty())
         {
             ItemStack itemStack = creeperType.getItemDropsAsList().get(0);
@@ -30,6 +30,8 @@ public class TextureBuilder
                 Resource resource = Minecraft.getInstance().getResourceManager().getResource(ResourcefulCreeperRender.CREEPER_LOCATION).get();
                 NativeImage nativeImage = NativeImage.read(resource.open());
 
+                java.util.List<Integer> palette = ColorHelper.getColour(itemStack);
+                if (palette == null || palette.isEmpty()) palette = java.util.List.of(0xff8a8a8a);
                 int lastColour = 0;
                 int lastRandomColour = 0;
 
@@ -39,22 +41,22 @@ public class TextureBuilder
                     {
                         try
                         {
-                            int colour = nativeImage.getPixelRGBA(j, i);
+                            int colour = nativeImage.getPixel(j, i);
                             if(lastColour == 0) lastColour = colour;
-                            if(lastRandomColour == 0) lastRandomColour = ColorHelper.getRandomColour(itemStack);
+                            if(lastRandomColour == 0) lastRandomColour = palette.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(palette.size()));
 
                             if(lastColour != colour)
                             {
-                                lastRandomColour = ColorHelper.getRandomColour(itemStack);
+                                lastRandomColour = palette.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(palette.size()));
                             }
-                            if(!isFacePixel(j, i) && colour != 0)
+                            if(!isFacePixel(j, i) && (colour >>> 24) != 0)
                             {
-                                nativeImage.setPixelRGBA(j, i, lastRandomColour);
+                                nativeImage.setPixel(j, i, lastRandomColour);
                             }
                             if(needsBlending(j, i))
                             {
                                 int black = -1308622848;
-                                nativeImage.blendPixel(j, i, black);
+                                nativeImage.setPixel(j, i, net.minecraft.util.ARGB.alphaBlend(nativeImage.getPixel(j, i), black));
                             }
                         } catch (IllegalArgumentException e)
                         {
@@ -85,7 +87,7 @@ public class TextureBuilder
             {
                 FileInputStream fileInputStream = new FileInputStream(texture.toFile());
                 NativeImage nativeImage = NativeImage.read(fileInputStream);
-                Minecraft.getInstance().getTextureManager().register(newLocation, new DynamicTexture(nativeImage));
+                Minecraft.getInstance().getTextureManager().register(newLocation, new DynamicTexture(() -> resourceName, nativeImage));
                 ResourcefulCreeperClient.addTexture(resourceName, newLocation);
                 fileInputStream.close();
                 return newLocation;
